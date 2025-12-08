@@ -1,0 +1,151 @@
+---
+title: '*Real estate sales analysis*'
+author: "Ziya Nazarli"
+date: "`r format(Sys.Date(),'%d %b %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    css: style.css
+---
+
+
+
+
+
+> **State of Connecticut** *Real Estate Sales 2001-2023 GL*
+
+
+Siyasət və İdarəetmə Ofisi hər il oktyabrın 1-dən sentyabrın 30-u arasında baş verən satış qiyməti 2000 ABŞ dolları və ya daha çox olan bütün daşınmaz əmlak satışlarının siyahısını saxlayır. Hər bir satış qeydi üçün fayla aşağıdakılar daxildir: şəhər, əmlakın ünvanı, satış tarixi, əmlak növü (yaşayış, mənzil, ticarət, sənaye və ya boş torpaq), satış qiyməti və əmlakın qiymətləndirilməsi.
+Məlumatı əldə etmək üçün
+[**Daxıl Ol **](https://catalog.data.gov/dataset/real-estate-sales-2001-2018/resource/f7cb94d8-283c-476f-a966-cc8c9e1308b4) 
+
+
+
+#### 
+
+```{r setup,include=TRUE,warning=FALSE,echo=FALSE,message=FALSE}
+library(DT)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+
+
+est=fread("C:/Users/ziya_/Downloads/estate_sales.csv")
+
+est_clean=est %>% mutate(`Property Type`=ifelse(`Property Type` == `Residential Type`,'',`Property Type`))
+est_clean$`Sales Ratio`=est_clean$`Assessed Value`/est_clean$`Sale Amount`
+est_clean$`Sales Ratio`=round(est_clean$`Sales Ratio`,2)
+
+rm(est)
+
+
+
+```
+
+
+## Illərə görə satış sayı
+
+```{r by_year, include=TRUE,warning=FALSE,echo=FALSE,message=FALSE}
+
+est_year =  est_clean %>% group_by(Year=`List Year`) %>% summarise(sales_count=n()) %>% arrange(sales_count)
+
+
+
+
+datatable(est_year, extensions = 'Buttons',
+           options = list(paging = TRUE,
+                          searching = TRUE,
+                          fixedColumns = TRUE,
+                          autoWidth = TRUE,
+                          ordering = TRUE,
+                          dom = 'Bftp',
+                          buttons = c('copy', 'csv', 'excel','print')
+                            ))
+
+
+
+ggplotly(ggplot(est_year,aes(x=factor(Year),y=sales_count,group = 1)) + geom_line(color="lightblue") + theme_light() + 
+  theme(axis.text.x =  element_text(angle = 45)) + labs(title = 'sales_count by year',x="Year",y="sales_count"))
+
+
+```
+
+> Qrafikə əsasən 2001-2004 cü illərdə əmlak satışları niyə artıb?
+ 2001-2004 cü illərdə faiz dərəcələri çox aşağı olub, ABŞ mərkəzi bankı İqtisadiyyatı canlandırmaq üçün faiz dərəcələrini 6.5% dən 1% ə qədər endirməsi,ucuz ipoteka krediti daşınmaz əmlaka tələbi artırdı
+
+
+
+## Əmlak və yaşayış növünə görə satış sayı
+
+
+```{r by_type,include=TRUE,warning=FALSE,echo=FALSE,message=FALSE}
+
+
+
+est_type =  est_clean %>% group_by(`Property Type`) %>% summarise(sales_count=n()) %>% 
+  arrange(sales_count)
+
+datatable(est_type, extensions = 'Buttons',
+           options = list(paging = TRUE,
+                          searching = TRUE,
+                          fixedColumns = TRUE,
+                          autoWidth = TRUE,
+                          ordering = TRUE,
+                          dom = 'Bftp',
+                          buttons = c('copy', 'csv', 'excel','print')
+                            ))
+
+est_type1 =  est_clean %>% group_by(`Residential Type`) %>% summarise(sales_count=n()) %>% 
+  arrange(sales_count)
+
+datatable(est_type1, extensions = 'Buttons',
+           options = list(paging = TRUE,
+                          searching = TRUE,
+                          fixedColumns = TRUE,
+                          autoWidth = TRUE,
+                          ordering = TRUE,
+                          dom = 'Bftp',
+                          buttons = c('copy', 'csv', 'excel','print')
+                            ))
+
+
+
+
+
+ggplotly(ggplot(est_type,aes(x=`Property Type`,y=sales_count)) + geom_col(fill="lightblue")+ theme_light())
+ggplotly(ggplot(est_type1,aes(x=`Residential Type`,y=sales_count)) + geom_col(fill="lightblue")+ theme_light())
+         
+```
+
+
+##  Əmlak və yaşayış növünə görə orta satış nisbəti 
+
+#### Sales_Ratio=Assessed_value/Sales_amount
+#### Satış_nisbəti=Qiymətləndirilən_dəyər/Satış_qiyməti
+
+```{r by_ratio,include=TRUE,warning=FALSE,echo=FALSE,message=FALSE}
+
+
+est_ratio=est_clean %>% group_by(`Property Type`) %>% summarise(sales_ratio=round(mean(`Sales Ratio`),2))
+
+datatable(est_ratio, extensions = 'Buttons',
+           options = list(paging = TRUE,
+                          searching = TRUE,
+                          fixedColumns = TRUE,
+                          autoWidth = TRUE,
+                          ordering = TRUE,
+                          dom = 'Bftp',
+                          buttons = c('copy', 'csv', 'excel','print')
+                            ))
+
+
+ggplotly(ggplot(est_ratio,aes(x=`Property Type`,y=sales_ratio)) + geom_col(fill="lightblue")+ theme_light())
+
+
+
+
+```
+
+
